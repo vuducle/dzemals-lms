@@ -5,15 +5,25 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RedisService } from '../../redis/redis.service';
 import { CreateUserDto, LoginUserDto } from './dto';
 import * as bcrypt from 'bcryptjs';
 import { ImageUtils } from '../../utils/image.utils';
+
+interface CachedUserLogin {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  hashedPassword: string;
+}
 
 @Injectable()
 export class UserService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private redisService: RedisService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto) {
@@ -71,6 +81,40 @@ export class UserService {
   async login(loginUserDto: LoginUserDto) {
     const { email, password } = loginUserDto;
 
+    // Try to get cached user data first
+    const cachedUser = await this.redisService.getCache<CachedUserLogin>(
+      `login:${email}`,
+    );
+    if (cachedUser) {
+      // Verify password still matches (security)
+      const isPasswordValid = await bcrypt.compare(password, cachedUser.hashedPassword);
+      if (isPasswordValid) {
+        // Generate fresh tokens
+        const { accessToken, refreshToken } = await this.generateTokens(
+          cachedUser.id,
+          cachedUser.email,
+        );
+
+        // Cache the login response
+        await this.redisService.setUserSession(cachedUser.id, {
+          id: cachedUser.id,
+          email: cachedUser.email,
+          firstName: cachedUser.firstName,
+          lastName: cachedUser.lastName,
+        });
+
+        return {
+          id: cachedUser.id,
+          email: cachedUser.email,
+          firstName: cachedUser.firstName,
+          lastName: cachedUser.lastName,
+          accessToken,
+          refreshToken,
+        };
+      }
+    }
+
+    // Fetch from database if not cached
     const user = await this.prisma.client.user.findUnique({
       where: { email },
     });
@@ -84,16 +128,33 @@ export class UserService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Cache user data for future logins (1 hour TTL)
+    await this.redisService.setCache<CachedUserLogin>(`login:${email}`, {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      hashedPassword: user.password,
+    }, 3600);
+
     // Generate tokens
     const { accessToken, refreshToken } = await this.generateTokens(
       user.id,
       user.email,
     );
 
-    // Save refresh token
+    // Save refresh token and cache session
     await this.prisma.client.user.update({
       where: { id: user.id },
       data: { refreshToken },
+    });
+
+    // Cache user session
+    await this.redisService.setUserSession(user.id, {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
     });
 
     return {
@@ -101,7 +162,6 @@ export class UserService {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      //avatarUrl: user.avatarUrl,
       accessToken,
       refreshToken,
     };

@@ -63,22 +63,33 @@ yarn install
 Create `.env` file in the `backend/` directory:
 
 ```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/dzemals"
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=password
+DB_NAME=dzemals_super_app
+DB_SCHEMA=public
 
-# JWT
-JWT_SECRET="your-secret-key-here-change-in-production"
-JWT_EXPIRATION="24h"
+# Generated Database URL
+DATABASE_URL="postgresql://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?schema=${DB_SCHEMA}"
 
-# Server
-PORT=3001
+# Server Port
+PORT=2808
 NODE_ENV=development
 
 # Redis (optional)
 REDIS_URL="redis://localhost:6379"
 
+# JWT Secrets
+JWT_SECRET=denis-kunz-geheimer-jwt-token
+JWT_REFRESH_SECRET=denis-refresh-token-ist-geheim
+JWT_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+
 # CORS
-CORS_ORIGIN="http://localhost:3000"
+CORS_ORIGIN=http://localhost:3000
+
+
 ```
 
 #### Frontend Setup

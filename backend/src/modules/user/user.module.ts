@@ -4,11 +4,13 @@ import { PassportModule } from '@nestjs/passport';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { RedisModule } from '../../redis/redis.module';
 import { JwtStrategy } from '../../strategies/jwt.strategy';
 
 @Module({
   imports: [
     PrismaModule,
+    RedisModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret',

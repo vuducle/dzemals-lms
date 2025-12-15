@@ -9,6 +9,7 @@ import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import loggerConfig from './config/logger.config';
 import { PrismaModule } from './prisma/prisma.module';
+import { RedisModule } from './redis/redis.module';
 import { UserModule } from './modules/user/user.module';
 import { StudentModule } from './modules/student/student.module';
 import { TeacherModule } from './modules/teacher/teacher.module';
@@ -32,6 +33,7 @@ import { EnrollmentModule } from './modules/enrollment/enrollment.module';
       },
     ]),
     PrismaModule,
+    RedisModule,
     UserModule,
     StudentModule,
     TeacherModule,

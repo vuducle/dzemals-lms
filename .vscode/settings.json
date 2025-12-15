@@ -1,0 +1,17 @@
+{
+  "python.linting.enabled": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.preferences.quotePreference": "single",
+  "pylance.typeCheckingMode": "off",
+  "ts-node": {
+    "experimentalEsm": true
+  }
+}
