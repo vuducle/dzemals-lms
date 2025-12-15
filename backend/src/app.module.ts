@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import databaseConfig from './config/database.config';
 import redisConfig from './config/redis.config';
 import loggerConfig from './config/logger.config';
@@ -18,6 +19,12 @@ import { EnrollmentModule } from './modules/enrollment/enrollment.module';
       envFilePath: '.env',
       load: [databaseConfig, redisConfig, loggerConfig],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute in milliseconds
+        limit: 100, // 100 requests per minute
+      },
+    ]),
     PrismaModule,
     UserModule,
     StudentModule,
