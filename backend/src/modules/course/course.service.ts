@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetAllCoursesQueryDto } from './dto';
+import { GetAllCoursesQueryDto, UpdateCourseDto } from './dto';
 import { CreateCourseDto } from './dto';
 
 @Injectable()
@@ -46,6 +46,45 @@ export class CourseService {
       }
 
       return course;
+    });
+  }
+
+  async update(teacherId: string, code: string, updateDto: UpdateCourseDto) {
+    const { schedule, ...courseData } = updateDto as any;
+
+    // ensure course exists
+    const existing = await this.prisma.client.course.findUnique({
+      where: { code },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Course with code ${code} not found`);
+    }
+
+    // check ownership: course.teacherId should match teacherId
+    if (existing.teacherId !== teacherId) {
+      throw new NotFoundException('Course not found for this teacher');
+    }
+
+    return this.prisma.client.$transaction(async (prisma) => {
+      const updated = await prisma.course.update({
+        where: { code },
+        data: {
+          ...courseData,
+        },
+      });
+
+      if (schedule) {
+        // remove old schedule entries and insert new ones
+        await prisma.schedule.deleteMany({ where: { courseId: updated.id } });
+        if (schedule.length > 0) {
+          await prisma.schedule.createMany({
+            data: schedule.map((s: any) => ({ ...s, courseId: updated.id })),
+          });
+        }
+      }
+
+      return updated;
     });
   }
 

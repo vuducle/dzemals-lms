@@ -6,7 +6,7 @@ import {
   Post,
   Query,
   Req,
-  UnauthorizedException,
+  Put,
   UseGuards,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
@@ -19,7 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateCourseDto, GetAllCoursesQueryDto } from './dto';
 import { TeacherAuthGuard } from '../../guards/teacher-auth.guard';
-import { PrismaService } from '../../prisma/prisma.service';
+import { UpdateCourseDto } from './dto';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -42,6 +42,20 @@ export class CourseController {
   })
   async create(@Body() createCourseDto: CreateCourseDto, @Req() req) {
     return this.courseService.create(req.teacher.id, createCourseDto);
+  }
+
+  @Put(':code')
+  @UseGuards(TeacherAuthGuard)
+  @ApiOperation({ summary: 'Update a course (teacher only, must own course)' })
+  @ApiResponse({ status: 200, description: 'Course updated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
+  async updateCourse(
+    @Param('code') code: string,
+    @Body() updateDto: UpdateCourseDto,
+    @Req() req,
+  ) {
+    return this.courseService.update(req.teacher.id, code, updateDto);
   }
 
   @Get()

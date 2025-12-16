@@ -28,12 +28,12 @@ export class TeacherAuthGuard extends AuthGuard('jwt') {
       this.logger.warn('No user or user.sub found in request');
       throw new UnauthorizedException();
     }
-    this.logger.log(user)
-    this.logger.log(`Checking teacher for userId: ${user.sub}`);
+    //this.logger.log(user)
+    //this.logger.log(`Checking teacher for userId: ${user.sub}`);
     const teacher = await this.teacherService.getTeacherByUserId(user.sub);
 
     if (!teacher) {
-      this.logger.warn(`No teacher found for userId: ${user.sub}`);
+      //this.logger.warn(`No teacher found for userId: ${user.sub}`);
       throw new UnauthorizedException('You are not a teacher');
     }
 
