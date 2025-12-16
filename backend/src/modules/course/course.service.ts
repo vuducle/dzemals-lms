@@ -167,4 +167,45 @@ export class CourseService {
 
     return course;
   }
+
+  async getEnrolledStudents(courseId: string) {
+    const course = await this.prisma.client.course.findUnique({
+      where: { id: courseId },
+    });
+
+    if (!course) {
+      throw new NotFoundException('Course not found');
+    }
+
+    const enrollments = await this.prisma.client.enrollment.findMany({
+      where: { courseId },
+      include: {
+        student: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return {
+      courseId,
+      courseTitle: course.title,
+      totalEnrolled: enrollments.length,
+      students: enrollments.map((e) => ({
+        enrollmentId: e.id,
+        studentId: e.student.id,
+        user: e.student.user,
+        enrolledAt: e.createdAt,
+      })),
+    };
+  }
 }

@@ -116,4 +116,12 @@ export class CourseController {
   async getCourseByCode(@Param('code') code: string) {
     return this.courseService.getCourseByCode(code);
   }
+
+  @Get(':courseId/enrolled-students')
+  @ApiOperation({ summary: 'Get all students enrolled in a course' })
+  @ApiResponse({ status: 200, description: 'List of enrolled students' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
+  async getEnrolledStudents(@Param('courseId') courseId: string) {
+    return this.courseService.getEnrolledStudents(courseId);
+  }
 }
