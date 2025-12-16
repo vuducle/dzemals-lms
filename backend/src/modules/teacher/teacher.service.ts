@@ -258,6 +258,70 @@ export class TeacherService {
     });
   }
 
+  /**
+   * Get a single grade by ID
+   */
+  async getGradeById(userId: string, gradeId: string) {
+    const teacher = await this.prisma.client.teacher.findUnique({
+      where: { userId },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher profile not found');
+    }
+
+    const grade = await this.prisma.client.grade.findUnique({
+      where: { id: gradeId },
+      include: { student: { include: { user: true } }, course: true },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found');
+    }
+
+    // Check if teacher owns this grade
+    if (grade.teacherId !== teacher.id) {
+      throw new ForbiddenException('You cannot view this grade');
+    }
+
+    return grade;
+  }
+
+  /**
+   * Delete a grade
+   */
+  async deleteGrade(userId: string, gradeId: string) {
+    const teacher = await this.prisma.client.teacher.findUnique({
+      where: { userId },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException('Teacher profile not found');
+    }
+
+    const grade = await this.prisma.client.grade.findUnique({
+      where: { id: gradeId },
+    });
+
+    if (!grade) {
+      throw new NotFoundException('Grade not found');
+    }
+
+    // Check if teacher owns this grade
+    if (grade.teacherId !== teacher.id) {
+      throw new ForbiddenException('You cannot delete this grade');
+    }
+
+    await this.prisma.client.grade.delete({
+      where: { id: gradeId },
+    });
+
+    return {
+      message: 'Grade deleted successfully',
+      id: gradeId,
+    };
+  }
+
   async getGradesByCourse(userId: string, courseId: string) {
     const teacher = await this.prisma.client.teacher.findUnique({
       where: { userId },

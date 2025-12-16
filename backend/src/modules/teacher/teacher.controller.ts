@@ -6,6 +6,7 @@ import {
   Request,
   Get,
   Post,
+  Delete,
   Param,
   Query,
   ForbiddenException,
@@ -136,6 +137,73 @@ export class TeacherController {
     @Body() updateGradeDto: UpdateGradeDto,
   ) {
     return this.teacherService.updateGrade(req.user.sub, gradeId, updateGradeDto);
+  }
+
+  @Get('grades/:gradeId')
+  @UseGuards(TeacherAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Get a specific grade by ID',
+    description: 'Retrieve details of a single grade. Only the teacher who assigned the grade can view it.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Grade details',
+    schema: {
+      example: {
+        id: 'grade123',
+        studentId: 'student456',
+        courseId: 'course789',
+        teacherId: 'teacher012',
+        grade: 4.5,
+        createdAt: '2025-12-15T08:05:20.535Z',
+        updatedAt: '2025-12-15T08:05:20.535Z',
+        student: {
+          id: 'student456',
+          user: {
+            id: 'user123',
+            email: 'student@example.com',
+            firstName: 'John',
+            lastName: 'Doe',
+          },
+        },
+        course: {
+          id: 'course789',
+          title: 'Introduction to Web Development',
+          code: 'CS101',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the teacher who assigned grade' })
+  @ApiResponse({ status: 404, description: 'Grade not found' })
+  async getGradeById(@Request() req, @Param('gradeId') gradeId: string) {
+    return this.teacherService.getGradeById(req.user.sub, gradeId);
+  }
+
+  @Delete('grades/:gradeId')
+  @UseGuards(TeacherAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Delete a grade',
+    description: 'Remove a grade assignment. Only the teacher who assigned the grade can delete it.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Grade deleted successfully',
+    schema: {
+      example: {
+        message: 'Grade deleted successfully',
+        id: 'grade123',
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - not the teacher who assigned grade' })
+  @ApiResponse({ status: 404, description: 'Grade not found' })
+  async deleteGrade(@Request() req, @Param('gradeId') gradeId: string) {
+    return this.teacherService.deleteGrade(req.user.sub, gradeId);
   }
 
   @Get('courses/:courseId/grades')
