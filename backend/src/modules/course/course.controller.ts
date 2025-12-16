@@ -7,6 +7,7 @@ import {
   Query,
   Req,
   Put,
+  Delete,
   UseGuards,
 } from '@nestjs/common';
 import { CourseService } from './course.service';
@@ -33,7 +34,6 @@ export class CourseController {
   @ApiOperation({ summary: 'Create a new course' })
   @ApiResponse({
     status: 201,
-    description: 'The course has been successfully created.',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
@@ -58,8 +58,6 @@ export class CourseController {
     return this.courseService.update(req.teacher.id, code, updateDto);
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Get all courses' })
   @ApiResponse({
     status: 200,
     type: GetAllCoursesQueryDto,
@@ -78,6 +76,19 @@ export class CourseController {
       },
     },
   })
+  @Delete(':code')
+  @UseGuards(TeacherAuthGuard)
+  @ApiOperation({ summary: 'Delete a course (teacher only, must own course)' })
+  @ApiResponse({ status: 200, description: 'Course deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
+  async deleteCourse(@Param('code') code: string, @Req() req) {
+    return this.courseService.remove(req.teacher.id, code);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all courses' })
   async getAllCourses(@Query() query: GetAllCoursesQueryDto) {
     return this.courseService.getAllCourses(query);
   }

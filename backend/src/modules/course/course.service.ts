@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetAllCoursesQueryDto, UpdateCourseDto } from './dto';
@@ -85,6 +86,27 @@ export class CourseService {
       }
 
       return updated;
+    });
+  }
+
+  async remove(teacherId: string, code: string) {
+    const existing = await this.prisma.client.course.findUnique({
+      where: { code },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Course with code ${code} not found`);
+    }
+
+    if (existing.teacherId !== teacherId) {
+      throw new ForbiddenException('You are not the owner of this course');
+    }
+
+    return this.prisma.client.$transaction(async (prisma) => {
+      // Ensure schedules are removed first to avoid FK issues (DB may cascade)
+      await prisma.schedule.deleteMany({ where: { courseId: existing.id } });
+      const deleted = await prisma.course.delete({ where: { code } });
+      return deleted;
     });
   }
 
