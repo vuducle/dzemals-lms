@@ -1,4 +1,14 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
 import {
   ApiBearerAuth,
@@ -7,7 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { StudentAuthGuard } from '../../guards/student-auth.guard';
-import { CreateEnrollmentDto } from './dto';
+import { CreateEnrollmentDto, GetMyEnrollmentsQueryDto } from './dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 
 @ApiTags('Enrollments')
@@ -32,5 +42,47 @@ export class EnrollmentController {
   })
   async create(@Body() createEnrollmentDto: CreateEnrollmentDto, @Req() req) {
     return this.enrollmentService.create(req.student.id, createEnrollmentDto);
+  }
+
+  @Get('my')
+  @UseGuards(StudentAuthGuard)
+  @ApiOperation({
+    summary: 'Get my enrollments with optional search/pagination',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of enrollments with course details',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getMyEnrollments(@Query() query: GetMyEnrollmentsQueryDto, @Req() req) {
+    return this.enrollmentService.getMyEnrollments(req.student.id, query);
+  }
+
+  @Get(':id')
+  @UseGuards(StudentAuthGuard)
+  @ApiOperation({ summary: 'Get a specific enrollment by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Enrollment with course details',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Enrollment not found' })
+  async getEnrollmentById(@Param('id') id: string, @Req() req) {
+    return this.enrollmentService.getEnrollmentById(id, req.student.id);
+  }
+
+  @Delete(':id')
+  @UseGuards(StudentAuthGuard)
+  @ApiOperation({ summary: 'Withdraw from a course (delete enrollment)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully withdrawn from course',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Enrollment not found' })
+  async withdrawEnrollment(@Param('id') id: string, @Req() req) {
+    return this.enrollmentService.withdrawEnrollment(id, req.student.id);
   }
 }

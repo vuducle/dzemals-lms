@@ -203,7 +203,7 @@ export class UserService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_SECRET || 'secret',
-      expiresIn: (process.env.JWT_EXPIRATION as any) || '15m',
+      expiresIn: (process.env.JWT_EXPIRATION as any) || '30m',
     });
 
     const refreshToken = this.jwtService.sign(payload, {
