@@ -1,3 +1,4 @@
+import { GetAllCoursesQueryDto } from './dto/get-all-courses-query.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -5,8 +6,48 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class CourseService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAllCourses() {
-    return this.prisma.client.course.findMany();
+  async getAllCourses(query: GetAllCoursesQueryDto) {
+    const { page = 1, limit = 10, search, teacherId } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+
+    if (teacherId) {
+      where.teacherId = teacherId;
+    }
+
+    if (search) {
+      where.OR = [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
+
+    const [courses, total] = await this.prisma.client.$transaction([
+      this.prisma.client.course.findMany({
+        where,
+        skip,
+        take: limit,
+      }),
+      this.prisma.client.course.count({ where }),
+    ]);
+
+    return {
+      data: courses,
+      total,
+      page,
+      limit,
+    };
   }
 
   async getCourseByCode(code: string) {
@@ -22,5 +63,4 @@ export class CourseService {
 
     return course;
   }
-
-  }
+}

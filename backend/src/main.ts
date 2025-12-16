@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { setupSwagger } from './config/swagger.config';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import setupDatabase from './setup-database';
 
 /**
@@ -23,6 +23,15 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create(AppModule);
+
+  // Enable global validation pipe for DTO transformation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+    }),
+  );
 
   // Enable CORS
   app.enableCors({
