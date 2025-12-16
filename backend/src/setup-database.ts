@@ -197,6 +197,50 @@ async function setupDatabase() {
       });
       console.log(`  ✅ Created student profile (ID: ${student.id})`);
 
+
+      const student2User = await prisma.user.create({
+        data: {
+          email: 'vuduc.le@example.com',
+          password: await bcrypt.hash('Student456!', 10),
+          firstName: 'Vu Duc',
+          lastName: 'Le',
+          avatarUrl: 'https://api.example.com/avatars/vu-duc-le.jpg',
+        },
+      });
+      console.log(
+        `  ✅ Created student user: Vu Duc Le (ID: ${student2User.id})`,
+      );
+
+      // Create Student 2
+      const student2 = await prisma.student.create({
+        data: {
+          userId: student2User.id,
+        },
+      });
+      console.log(`  ✅ Created student profile (ID: ${student2.id})`);
+
+
+      const student3User = await prisma.user.create({
+        data: {
+          email: 'armin.dorri@example.com',
+          password: await bcrypt.hash('Student789!', 10),
+          firstName: 'Armin',
+          lastName: 'Dorri',
+          avatarUrl: 'https://api.example.com/avatars/armin-dorri.jpg',
+        },
+      });
+      console.log(
+        `  ✅ Created student user: Armin Dorri (ID: ${student3User.id})`,
+      );
+
+      // Create Student 3
+      const student3 = await prisma.student.create({
+        data: {
+          userId: student3User.id,
+        },
+      });
+      console.log(`  ✅ Created student profile (ID: ${student3.id})`);
+
       // Create Course with schedule
       const course = await prisma.course.create({
         data: {

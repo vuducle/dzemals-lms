@@ -3,6 +3,11 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class StudentService {
-  // Use this.prisma.client to access the Prisma Client
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getStudentByUserId(userId: string) {
+    return this.prisma.client.student.findUnique({
+      where: { userId },
+    });
+  }
 }

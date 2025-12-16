@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
 import { CourseService } from './course.service';
 import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
 import {
@@ -7,7 +17,9 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { GetAllCoursesQueryDto } from './dto/get-all-courses-query.dto';
+import { CreateCourseDto, GetAllCoursesQueryDto } from './dto';
+import { TeacherAuthGuard } from '../../guards/teacher-auth.guard';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @ApiTags('Courses')
 @Controller('courses')
@@ -15,6 +27,22 @@ import { GetAllCoursesQueryDto } from './dto/get-all-courses-query.dto';
 @ApiBearerAuth()
 export class CourseController {
   constructor(private readonly courseService: CourseService) {}
+
+  @Post()
+  @UseGuards(TeacherAuthGuard)
+  @ApiOperation({ summary: 'Create a new course' })
+  @ApiResponse({
+    status: 201,
+    description: 'The course has been successfully created.',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 409,
+    description: 'Course with this code already exists',
+  })
+  async create(@Body() createCourseDto: CreateCourseDto, @Req() req) {
+    return this.courseService.create(req.teacher.id, createCourseDto);
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all courses' })

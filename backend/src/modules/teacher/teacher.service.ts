@@ -6,6 +6,12 @@ export class TeacherService {
   // Use this.prisma.client to access the Prisma Client
   constructor(private prisma: PrismaService) {}
 
+  async getTeacherByUserId(userId: string) {
+    return this.prisma.client.teacher.findUnique({
+      where: { userId },
+    });
+  }
+
   async updateUserRole(teacherId: string, userId: string, isTeacher: boolean) {
     // Verify that the requester is actually a teacher
     const requesterTeacher = await this.prisma.client.teacher.findUnique({
